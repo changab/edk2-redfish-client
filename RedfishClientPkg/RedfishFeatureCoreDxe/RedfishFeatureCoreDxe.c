@@ -134,6 +134,11 @@ StartUpFeatureDriver (
   if ((ThisFeatureDriverList == NULL) || (StartupContext == NULL)) {
     return;
   }
+  if (CurrentConfigLanguageUri != NULL) {
+    DEBUG ((DEBUG_MANAGEABILITY, "%a: Current Config Language URI - %s\n", __func__, CurrentConfigLanguageUri));
+  } else {
+    DEBUG ((DEBUG_MANAGEABILITY, "%a: Current Config Language URI - Servie Root\n", __func__));
+  }
 
   if (CurrentConfigLanguageUri != NULL) {
     DEBUG ((DEBUG_MANAGEABILITY, "%a: Current Config Language URI - %s\n", __func__, CurrentConfigLanguageUri));
