@@ -47,5 +47,5 @@ LIBRARY_CLASS                  = BootOptionCollectionLib | DXE_DRIVER UEFI_APPLI
   #   C4706: assignment within conditional expression
   #
   MSFT:*_*_*_CC_FLAGS = /wd4706
-
+  GCC:*_*_*_CC_FLAGS = -Wno-unused-but-set-variable
 
