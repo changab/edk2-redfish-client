@@ -32,6 +32,7 @@
 #include <Library/RedfishResourceIdentifyLib.h>
 #include <Library/EdkIIRedfishResourceConfigLib.h>
 #include <Library/RedfishAddendumLib.h>
+#include <Library/RedfishHttpCacheLib.h>
 
 //
 // Protocols
@@ -113,7 +114,8 @@ RedfishProvisioningResourceCommon (
 EFI_STATUS
 RedfishCheckResourceCommon (
   IN     REDFISH_RESOURCE_COMMON_PRIVATE  *Private,
-  IN     CHAR8                            *Json
+  IN     CHAR8                            *Json,
+  IN     CHAR8                            *HeaderEtag OPTIONAL
   );
 
 /**
