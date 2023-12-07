@@ -15,22 +15,27 @@
   INF RedfishClientPkg/RedfishFeatureCoreDxe/RedfishFeatureCoreDxe.inf
   INF RedfishClientPkg/RedfishETagDxe/RedfishETagDxe.inf
   INF RedfishClientPkg/RedfishConfigLangMapDxe/RedfishConfigLangMapDxe.inf
-  INF RedfishClientPkg/Features/Memory/V1_7_1/Dxe/MemoryDxe.inf
-  INF RedfishClientPkg/Features/MemoryCollectionDxe/MemoryCollectionDxe.inf
-  INF RedfishClientPkg/Features/ComputerSystem/v1_5_0/Dxe/ComputerSystemDxe.inf
+  #INF RedfishClientPkg/Features/Memory/V1_7_1/Dxe/MemoryDxe.inf
+  #INF RedfishClientPkg/Features/MemoryCollectionDxe/MemoryCollectionDxe.inf
+  #INF RedfishClientPkg/Features/ComputerSystem/v1_5_0/Dxe/ComputerSystemDxe.inf
+  INF RedfishClientPkg/Features/ComputerSystem/v1_13_0/Dxe/ComputerSystemDxe.inf
   INF RedfishClientPkg/Features/ComputerSystemCollectionDxe/ComputerSystemCollectionDxe.inf
-  INF RedfishClientPkg/Features/Bios/v1_0_9/Dxe/BiosDxe.inf
-  INF RedfishClientPkg/HiiToRedfishMemoryDxe/HiiToRedfishMemoryDxe.inf
-  INF RedfishClientPkg/HiiToRedfishBootDxe/HiiToRedfishBootDxe.inf
-  INF RedfishClientPkg/HiiToRedfishBiosDxe/HiiToRedfishBiosDxe.inf
+  INF RedfishClientPkg/Features/BootOptionCollection/BootOptionCollectionDxe.inf
+  #INF RedfishClientPkg/Features/Bios/v1_0_9/Dxe/BiosDxe.inf
+  #INF RedfishClientPkg/HiiToRedfishMemoryDxe/HiiToRedfishMemoryDxe.inf
+  #INF RedfishClientPkg/HiiToRedfishBootDxe/HiiToRedfishBootDxe.inf
+  #INF RedfishClientPkg/HiiToRedfishBiosDxe/HiiToRedfishBiosDxe.inf
 
   !include RedfishClientPkg/RedfishJsonStructureDxe.fdf.inc
   #
   # Below two modules should be pulled in by build tool.
   #
-  INF RedfishClientPkg/Converter/Memory/v1_7_1/RedfishMemory_V1_7_1_Dxe.inf
-  INF RedfishClientPkg/Converter/MemoryCollection/RedfishMemoryCollection_Dxe.inf
-  INF RedfishClientPkg/Converter/ComputerSystem/v1_5_0/RedfishComputerSystem_V1_5_0_Dxe.inf
+  #INF RedfishClientPkg/Converter/Memory/v1_7_1/RedfishMemory_V1_7_1_Dxe.inf
+  #INF RedfishClientPkg/Converter/MemoryCollection/RedfishMemoryCollection_Dxe.inf
+  #INF RedfishClientPkg/Converter/ComputerSystem/v1_5_0/RedfishComputerSystem_V1_5_0_Dxe.inf
+  INF RedfishClientPkg/Converter/ComputerSystem/v1_13_0/RedfishComputerSystem_V1_13_0_Dxe.inf
   INF RedfishClientPkg/Converter/ComputerSystemCollection/RedfishComputerSystemCollection_Dxe.inf
-  INF RedfishClientPkg/Converter/Bios/v1_0_9/RedfishBios_V1_0_9_Dxe.inf
+  INF RedfishClientPkg/Converter/BootOptionCollection/RedfishBootOptionCollection_Dxe.inf
+  #INF RedfishClientPkg/Converter/Bios/v1_0_9/RedfishBios_V1_0_9_Dxe.inf
+
 !endif
