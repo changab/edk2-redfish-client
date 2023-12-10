@@ -1952,10 +1952,10 @@ CreatePayloadToPatchResource (
   //
   // Find ETag
   //
-  Status = GetEtagAndLocation (&PostResponse, Etag, NULL);
-  if (EFI_ERROR (Status)) {
-    Status = EFI_DEVICE_ERROR;
-  }
+//  Status = GetEtagAndLocation (&PostResponse, Etag, NULL);
+//  if (EFI_ERROR (Status)) {
+//    Status = EFI_DEVICE_ERROR;
+//  }
 
   RedfishFreeResponse (
     PostResponse.StatusCode,
