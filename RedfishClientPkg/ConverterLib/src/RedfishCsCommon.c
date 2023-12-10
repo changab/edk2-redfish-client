@@ -753,8 +753,8 @@ CreateJsonPayloadAndCs (
   int     size
   )
 {
-  json_t            *TempJsonObj;
-  RedfishCS_char    *TempChar;
+//  json_t            *TempJsonObj;
+//  RedfishCS_char    *TempChar;
   RedfishCS_Header  *Header;
   void              *TempCS;
 
@@ -773,15 +773,15 @@ CreateJsonPayloadAndCs (
     return RedfishCS_status_unknown_error;
   }
 
-  TempJsonObj = json_object_get (*JsonObjReturned, "@odata.type");
-  if (TempJsonObj == NULL) {
-    return RedfishCS_status_invalid_parameter;
-  }
+//  TempJsonObj = json_object_get (*JsonObjReturned, "@odata.type");
+//  if (TempJsonObj == NULL) {
+//    return RedfishCS_status_invalid_parameter;
+//  }
 
-  TempChar = (RedfishCS_char *)json_string_value (TempJsonObj);
-  if ((TempChar == NULL) || !SupportedRedfishResource (TempChar, ResourceType, ResourceVersion, TypeName)) {
-    return RedfishCS_status_unsupported;
-  }
+//  TempChar = (RedfishCS_char *)json_string_value (TempJsonObj);
+//  if ((TempChar == NULL) || !SupportedRedfishResource (TempChar, ResourceType, ResourceVersion, TypeName)) {
+//    return RedfishCS_status_unsupported;
+//  }
 
   TempCS = malloc (size);
   if (TempCS == NULL) {
