@@ -577,7 +577,7 @@ HiiToRedfishBootDriverCallback (
   DEBUG ((DEBUG_INFO, "%a, action: 0x%x QID: 0x%x\n", __func__, Action, QuestionId));
 
   if ((QuestionId == QUESTION_ID_BOOT_SOURCE_OVERRIDE_ENABLED) && (Action == EFI_BROWSER_ACTION_FORM_OPEN)) {
-    RefreshBootOrderList ();
+//    RefreshBootOrderList ();
 
     return EFI_SUCCESS;
   }
@@ -608,7 +608,7 @@ HiiToRedfishBootReadyToProvisioning (
   //
   // Refresh boot order and create configure language
   //
-  RefreshBootOrderList ();
+//  RefreshBootOrderList ();
 }
 
 /**
