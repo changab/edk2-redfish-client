@@ -3057,14 +3057,14 @@ Json_ComputerSystem_V1_13_0_To_CS(RedfishCS_char *JsonRawText, RedfishComputerSy
   else {if (Status == RedfishCS_status_not_found){/*This is not the required property.*/}}
 
   // @odata.id
-  Status = GetRedfishPropertyStr (Cs, JsonObj, "@odata.id", &Cs->odata_id);
-  if (Status != RedfishCS_status_success && Status != RedfishCS_status_not_found) {goto Error;}
-  else {if (Status == RedfishCS_status_not_found){goto Error;}}
+//  Status = GetRedfishPropertyStr (Cs, JsonObj, "@odata.id", &Cs->odata_id);
+//  if (Status != RedfishCS_status_success && Status != RedfishCS_status_not_found) {goto Error;}
+//  else {if (Status == RedfishCS_status_not_found){goto Error;}}
 
   // @odata.type
-  Status = GetRedfishPropertyStr (Cs, JsonObj, "@odata.type", &Cs->odata_type);
-  if (Status != RedfishCS_status_success && Status != RedfishCS_status_not_found) {goto Error;}
-  else {if (Status == RedfishCS_status_not_found){goto Error;}}
+//  Status = GetRedfishPropertyStr (Cs, JsonObj, "@odata.type", &Cs->odata_type);
+//  if (Status != RedfishCS_status_success && Status != RedfishCS_status_not_found) {goto Error;}
+//  else {if (Status == RedfishCS_status_not_found){goto Error;}}
 
   // Actions
   Status = GenActionsCs (Cs, JsonObj, "Actions", &Cs->Actions);
@@ -3140,9 +3140,9 @@ Json_ComputerSystem_V1_13_0_To_CS(RedfishCS_char *JsonRawText, RedfishComputerSy
   else {if (Status == RedfishCS_status_not_found){/*This is not the required property.*/}}
 
   // Id
-  Status = GetRedfishPropertyStr (Cs, JsonObj, "Id", &Cs->Id);
-  if (Status != RedfishCS_status_success && Status != RedfishCS_status_not_found) {goto Error;}
-  else {if (Status == RedfishCS_status_not_found){goto Error;}}
+ // Status = GetRedfishPropertyStr (Cs, JsonObj, "Id", &Cs->Id);
+ // if (Status != RedfishCS_status_success && Status != RedfishCS_status_not_found) {goto Error;}
+ // else {if (Status == RedfishCS_status_not_found){goto Error;}}
 
   // IndicatorLED
   Status = GetRedfishPropertyStr (Cs, JsonObj, "IndicatorLED", &Cs->IndicatorLED);
@@ -3198,9 +3198,9 @@ Json_ComputerSystem_V1_13_0_To_CS(RedfishCS_char *JsonRawText, RedfishComputerSy
   else {if (Status == RedfishCS_status_not_found){/*This is not the required property.*/}}
 
   // Name
-  Status = GetRedfishPropertyStr (Cs, JsonObj, "Name", &Cs->Name);
-  if (Status != RedfishCS_status_success && Status != RedfishCS_status_not_found) {goto Error;}
-  else {if (Status == RedfishCS_status_not_found){goto Error;}}
+//  Status = GetRedfishPropertyStr (Cs, JsonObj, "Name", &Cs->Name);
+//  if (Status != RedfishCS_status_success && Status != RedfishCS_status_not_found) {goto Error;}
+//  else {if (Status == RedfishCS_status_not_found){goto Error;}}
 
   // NetworkInterfaces
   InitializeLinkHead (&Cs->NetworkInterfaces);
