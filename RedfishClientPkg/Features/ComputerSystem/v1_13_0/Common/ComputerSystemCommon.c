@@ -10,7 +10,8 @@
 
 #include "ComputerSystemCommon.h"
 
-CHAR8  ComputerSystemEmptyJson[] = "{\"@odata.id\": \"\", \"@odata.type\": \"#ComputerSystem.v1_13_0.ComputerSystem\", \"Id\": \"\", \"Name\": \"\", \"Boot\":{}}";
+//CHAR8  ComputerSystemEmptyJson[] = "{\"@odata.id\": \"\", \"@odata.type\": \"#ComputerSystem.v1_13_0.ComputerSystem\", \"Id\": \"\", \"Name\": \"\", \"Boot\":{}}";
+CHAR8  ComputerSystemEmptyJson[] = "{\"Boot\":{}}";
 
 REDFISH_RESOURCE_COMMON_PRIVATE  *mRedfishResourcePrivate             = NULL;
 EFI_HANDLE                       mRedfishResourceConfigProtocolHandle = NULL;
@@ -122,12 +123,14 @@ ProvisioningComputerSystemProperties (
   OUT CHAR8                             **ResultJson
   )
 {
-  EFI_REDFISH_COMPUTERSYSTEM_V1_13_0     *ComputerSystem;
-  EFI_REDFISH_COMPUTERSYSTEM_V1_13_0_CS  *ComputerSystemCs;
-  EFI_STATUS                             Status;
-  BOOLEAN                                PropertyChanged;
-  CHAR8                                  **AsciiStringArrayValue;
-  UINTN                                  ArraySize;
+  EFI_REDFISH_COMPUTERSYSTEM_V1_13_0       *ComputerSystem;
+  EFI_REDFISH_COMPUTERSYSTEM_V1_13_0_CS   *ComputerSystemCs;
+  EFI_STATUS                              Status;
+  BOOLEAN                                 PropertyChanged;
+//  CHAR8                                   **AsciiStringArrayValue;
+//  UINTN                                   ArraySize;
+  CHAR8                                   *AsciiStringValue;
+  EFI_REST_JSON_RESOURCE_TYPE_IDENTIFIER  ResourceIdentifier;
 
   if ((JsonStructProtocol == NULL) || (ResultJson == NULL) || IS_EMPTY_STRING (InputJson) || IS_EMPTY_STRING (ConfigureLang)) {
     return EFI_INVALID_PARAMETER;
@@ -139,9 +142,14 @@ ProvisioningComputerSystemProperties (
   PropertyChanged = FALSE;
 
   ComputerSystem = NULL;
+  ResourceIdentifier.NameSpace.ResourceTypeName = RESOURCE_SCHEMA;
+  ResourceIdentifier.NameSpace.MajorVersion     = RESOURCE_SCHEMA_MAJOR;
+  ResourceIdentifier.NameSpace.MinorVersion     = RESOURCE_SCHEMA_MINOR;
+  ResourceIdentifier.NameSpace.ErrataVersion    = RESOURCE_SCHEMA_ERRATA;
+  ResourceIdentifier.DataType                   = NULL;
   Status         = JsonStructProtocol->ToStructure (
                                          JsonStructProtocol,
-                                         NULL,
+                                         &ResourceIdentifier,
                                          InputJson,
                                          (EFI_REST_JSON_STRUCTURE_HEADER **)&ComputerSystem
                                          );
@@ -166,12 +174,51 @@ ProvisioningComputerSystemProperties (
     //
     // Handle BOOT->BOOTORDER
     //
-    if (PropertyChecker (ComputerSystemCs->Boot->BootOrder, ProvisionMode)) {
-      AsciiStringArrayValue = GetPropertyStringArrayValue (RESOURCE_SCHEMA, RESOURCE_SCHEMA_VERSION, L"Boot/BootOrder", ConfigureLang, &ArraySize);
-      if (AsciiStringArrayValue != NULL) {
-        if (ProvisionMode || !CompareRedfishStringArrayValues (ComputerSystemCs->Boot->BootOrder, AsciiStringArrayValue, ArraySize)) {
-          AddRedfishCharArray (&ComputerSystemCs->Boot->BootOrder, AsciiStringArrayValue, ArraySize);
-          PropertyChanged = TRUE;
+//    if (PropertyChecker (ComputerSystemCs->Boot->BootOrder, ProvisionMode)) {
+//      AsciiStringArrayValue = GetPropertyStringArrayValue (RESOURCE_SCHEMA, RESOURCE_SCHEMA_VERSION, L"Boot/BootOrder", ConfigureLang, &ArraySize);
+//      if (AsciiStringArrayValue != NULL) {
+//        if (ProvisionMode || !CompareRedfishStringArrayValues (ComputerSystemCs->Boot->BootOrder, AsciiStringArrayValue, ArraySize)) {
+//          AddRedfishCharArray (&ComputerSystemCs->Boot->BootOrder, AsciiStringArrayValue, ArraySize);
+//          PropertyChanged = TRUE;
+//        }
+//      }
+//    }
+
+    //
+    // Handle BOOT->BOOTSOURCEOVERRIDEENABLED
+    //
+    if (PropertyChecker (ComputerSystemCs->Boot->BootSourceOverrideEnabled, ProvisionMode)) {
+      AsciiStringValue = GetPropertyStringValue (RESOURCE_SCHEMA, RESOURCE_SCHEMA_VERSION, L"Boot/BootSourceOverrideEnabled", ConfigureLang);
+      if (AsciiStringValue != NULL) {
+        if (ProvisionMode || (AsciiStrCmp (ComputerSystemCs->Boot->BootSourceOverrideEnabled, AsciiStringValue) != 0)) {
+          ComputerSystemCs->Boot->BootSourceOverrideEnabled = AsciiStringValue;
+          PropertyChanged                                   = TRUE;
+        }
+      }
+    }
+
+    //
+    // Handle BOOT->BOOTSOURCEOVERRIDEMODE
+    //
+//    if (PropertyChecker (ComputerSystemCs->Boot->BootSourceOverrideMode, ProvisionMode)) {
+//      AsciiStringValue = GetPropertyStringValue (RESOURCE_SCHEMA, RESOURCE_SCHEMA_VERSION, L"Boot/BootSourceOverrideMode", ConfigureLang);
+//      if (AsciiStringValue != NULL) {
+//        if (ProvisionMode || (AsciiStrCmp (ComputerSystemCs->Boot->BootSourceOverrideMode, AsciiStringValue) != 0)) {
+//          ComputerSystemCs->Boot->BootSourceOverrideMode = AsciiStringValue;
+//          PropertyChanged                                = TRUE;
+//        }
+//      }
+//    }
+
+    //
+    // Handle BOOT->BOOTSOURCEOVERRIDETARGET
+    //
+    if (PropertyChecker (ComputerSystemCs->Boot->BootSourceOverrideTarget, ProvisionMode)) {
+      AsciiStringValue = GetPropertyStringValue (RESOURCE_SCHEMA, RESOURCE_SCHEMA_VERSION, L"Boot/BootSourceOverrideTarget", ConfigureLang);
+      if (AsciiStringValue != NULL) {
+        if (ProvisionMode || (AsciiStrCmp (ComputerSystemCs->Boot->BootSourceOverrideTarget, AsciiStringValue) != 0)) {
+          ComputerSystemCs->Boot->BootSourceOverrideTarget = AsciiStringValue;
+          PropertyChanged                                  = TRUE;
         }
       }
     }
@@ -342,6 +389,7 @@ ProvisioningComputerSystemExistResource (
   EFI_STRING  ConfigureLang;
   CHAR8       *Json;
   CHAR8       *JsonWithAddendum;
+  CHAR8       *Etag;
 
   if (Private == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -349,6 +397,7 @@ ProvisioningComputerSystemExistResource (
 
   Json          = NULL;
   ConfigureLang = NULL;
+  Etag          = NULL;
 
   ConfigureLang = RedfishGetConfigLanguage (Private->Uri);
   if (ConfigureLang == NULL) {
@@ -411,12 +460,16 @@ ProvisioningComputerSystemExistResource (
   //
   // PUT back to instance
   //
-  Status = CreatePayloadToPatchResource (Private->RedfishService, Private->Payload, Json, NULL);
+  Status = CreatePayloadToPatchResource (Private->RedfishService, Private->Payload, Json, &Etag);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: patch resource for %s failed: %r\n", __FUNCTION__, ConfigureLang, Status));
   }
 
 ON_RELEASE:
+
+  if (Etag != NULL) {
+    FreePool (Etag);
+  }
 
   if (Json != NULL) {
     FreePool (Json);
