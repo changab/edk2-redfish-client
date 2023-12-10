@@ -644,6 +644,7 @@ RedfishUpdateResourceCommon (
   CHAR8       *Json;
   CHAR8       *JsonWithAddendum;
   EFI_STRING  ConfigureLang;
+  CHAR8       *Etag;
 
   if ((Private == NULL) || IS_EMPTY_STRING (InputJson)) {
     return EFI_INVALID_PARAMETER;
@@ -651,6 +652,7 @@ RedfishUpdateResourceCommon (
 
   Json          = NULL;
   ConfigureLang = NULL;
+  Etag          = NULL;
 
   ConfigureLang = RedfishGetConfigLanguage (Private->Uri);
   if (ConfigureLang == NULL) {
@@ -713,12 +715,16 @@ RedfishUpdateResourceCommon (
   //
   // PUT back to instance
   //
-  Status = CreatePayloadToPatchResource (Private->RedfishService, Private->Payload, Json, NULL);
+  Status = CreatePayloadToPatchResource (Private->RedfishService, Private->Payload, Json, &Etag);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: patch resource for %s failed: %r\n", __func__, ConfigureLang, Status));
   }
 
 ON_RELEASE:
+
+if (Etag != NULL) {
+    FreePool (Etag);
+  }
 
   if (Json != NULL) {
     FreePool (Json);
