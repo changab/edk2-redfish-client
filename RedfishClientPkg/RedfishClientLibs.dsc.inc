@@ -12,7 +12,7 @@
 #
 ##
 !if $(REDFISH_CLIENT) == TRUE
-  !include RedfishClientPkg/RedfishJsonStructureLib.dsc.inc
+  # !include RedfishClientPkg/RedfishJsonStructureLib.dsc.inc
 !endif
 
   #

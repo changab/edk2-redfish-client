@@ -18,7 +18,7 @@
   RedfishClientPkg/RedfishETagDxe/RedfishETagDxe.inf
   RedfishClientPkg/RedfishConfigLangMapDxe/RedfishConfigLangMapDxe.inf
   #RedfishClientPkg/HiiToRedfishMemoryDxe/HiiToRedfishMemoryDxe.inf
-  #RedfishClientPkg/HiiToRedfishBootDxe/HiiToRedfishBootDxe.inf
+  RedfishClientPkg/HiiToRedfishBootDxe/HiiToRedfishBootDxe.inf
   #RedfishClientPkg/HiiToRedfishBiosDxe/HiiToRedfishBiosDxe.inf
 !endif
   #
@@ -38,7 +38,7 @@
   RedfishClientPkg/Features/BootOptionCollection/BootOptionCollectionDxe.inf
   #RedfishClientPkg/Features/Bios/v1_0_9/Dxe/BiosDxe.inf
 
-  !include RedfishClientPkg/RedfishJsonStructureDxe.dsc.inc
+  #!include RedfishClientPkg/RedfishJsonStructureDxe.dsc.inc
 
   #
   # Below two modules should be pulled in by build tool.
