@@ -1,14 +1,14 @@
-/** @file 
+/** @file
   The implementation of EFI Redfish JSON Structure DXE driver for below
   Redfish schema.
-   - ComputerSystem.v1_13_0 
+   - ComputerSystem.v1_13_0
 
   (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
   Auto-generated file by Redfish Schema C Structure Generator.
   https://github.com/DMTF/Redfish-Schema-C-Struct-Generator
-  
+
   Copyright Notice:
   Copyright 2019-2021 Distributed Management Task Force, Inc. All rights reserved.
   License: BSD 3-Clause License. For full text see link: https://github.com/DMTF/Redfish-JSON-C-Struct-Converter/blob/master/LICENSE.md d
@@ -16,6 +16,7 @@
 **/
 #include <Uefi.h>
 #include <Library/BaseLib.h>
+#include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
@@ -32,7 +33,7 @@
 CHAR8 mResourceTypeStr [] = "#ComputerSystem";
 BOOLEAN IsRevisonController = TRUE;
 
-// Support ComputerSystem V1_13_0 
+// Support ComputerSystem V1_13_0
 EFI_REST_JSON_STRUCTURE_SUPPORTED ResourceInterP [] = {
   {
     {
@@ -54,11 +55,11 @@ EFI_REST_JSON_STRUCTURE_PROTOCOL *mRestJsonStructureProt = NULL;
 
 /**
   This function gets the string of revision number.
-  
+
   @param[in]    Str             Odata.type string.
-  @param[in]    StrIndex        Current string index. 
+  @param[in]    StrIndex        Current string index.
   @param[in]    OdataTypeStrLen Odata.type string length
-   
+
   @retval != 0 Number found.
   @retval 0    Number not found.
 
@@ -89,11 +90,11 @@ GetOdataTypeVersionNum (CHAR8 *Str, UINTN *StrIndex, UINTN OdataTypeStrLen)
 }
 
 /**
-  This function checks if the given JSON property supported by this 
+  This function checks if the given JSON property supported by this
   Redfish JSON to C structure convertor.
-  
+
   @param[in]    ResoruceRaw      Given JSON property.
-   
+
   @retval EFI_SUCCESS
   @retval Others
 
@@ -123,7 +124,7 @@ CheckSupportedSchema (IN CHAR8 *ResoruceRaw)
   if (OdataTypeStrLen < AsciiStrLen(mResourceTypeStr)) {
     goto Error;
   }
- 
+
   if (CompareMem ((VOID *)TempChar, (VOID *)mResourceTypeStr, AsciiStrLen(mResourceTypeStr)) != 0) {
     goto Error;
   }
@@ -141,7 +142,7 @@ CheckSupportedSchema (IN CHAR8 *ResoruceRaw)
     //
     return TRUE;
   }
-  
+
   //
   // Check major revision.
   //
@@ -164,7 +165,7 @@ CheckSupportedSchema (IN CHAR8 *ResoruceRaw)
   if (StrMajorIndex == 0) {
     goto Error;
   }
-  if ((AsciiStrCmp(TempChar + StrMajorIndex, ResourceInterP[0].RestResourceInterp.NameSpace.MajorVersion) == 0) && 
+  if ((AsciiStrCmp(TempChar + StrMajorIndex, ResourceInterP[0].RestResourceInterp.NameSpace.MajorVersion) == 0) &&
       (AsciiStrCmp(TempChar + StrMinorIndex, ResourceInterP[0].RestResourceInterp.NameSpace.MinorVersion) == 0) &&
       (AsciiStrCmp(TempChar + StrErrataIndex, ResourceInterP[0].RestResourceInterp.NameSpace.ErrataVersion) == 0)) {
     json_decref(JsonObjReturned);
@@ -178,13 +179,13 @@ Error:;
 /**
   This function sets the structure of givin JSON resource in text format through
   supported Redfish schema interpreter.
-  
-  @param[in]    This              EFI_REST_JSON_STRUCTURE_PROTOCOL instance. 
+
+  @param[in]    This              EFI_REST_JSON_STRUCTURE_PROTOCOL instance.
   @param[in]    RsrcTypeIdentifier  Resource type identifier.
   @param[in]    ResoruceRaw       Given Restful resource.
   @param[in]    PropertyName      Name of property defined in the data type to retrieve.
   @param[out]   InterpProp        Property interpreted from given ResoruceRaw.
-   
+
   @retval EFI_SUCCESS
   @retval Others
 
@@ -211,7 +212,7 @@ ComputerSystemToStruct (
     return EFI_INVALID_PARAMETER;
   }
   if (RsrcIdentifier == NULL ||
-      (RsrcIdentifier != NULL && 
+      (RsrcIdentifier != NULL &&
       (RsrcIdentifier->NameSpace.MajorVersion == NULL ||
        RsrcIdentifier->NameSpace.MinorVersion == NULL ||
        RsrcIdentifier->NameSpace.ErrataVersion == NULL))
@@ -229,8 +230,10 @@ ComputerSystemToStruct (
     return EFI_UNSUPPORTED;
   }
 
+  DEBUG((DEBUG_MANAGEABILITY, "%a: Call to Json_ComputerSystem_V1_13_0_To_CS\n", __func__));
   Status = (EFI_STATUS)Json_ComputerSystem_V1_13_0_To_CS (ResoruceRaw, &ComputerSystemV1_13_0Cs);
   if (EFI_ERROR (Status)){
+      DEBUG((DEBUG_ERROR, "%a: Call to Json_ComputerSystem_V1_13_0_To_CS failed (%d)\n", __func__, Status));
     return Status;
   }
   ComputerSystemV1_13_0 = (EFI_REDFISH_COMPUTERSYSTEM_V1_13_0 *)AllocateZeroPool (
@@ -264,12 +267,12 @@ ComputerSystemToStruct (
 /**
   The wrapper function of ComputerSystemToStruct which invokes **RESOURCE_TYPE**!ToStruct
   with additional parameter "PropertyName".
-  
-  @param[in]    This              EFI_REST_JSON_STRUCTURE_PROTOCOL instance. 
+
+  @param[in]    This              EFI_REST_JSON_STRUCTURE_PROTOCOL instance.
   @param[in]    RsrcTypeIdentifier  Resource type identifier.
   @param[in]    ResoruceRaw       Given Restful resource.
   @param[out]   InterpProp        Property interpreted from given ResoruceRaw.
-   
+
   @retval EFI_SUCCESS
   @retval Others
 
@@ -295,8 +298,8 @@ ComputerSystemToStructWrapper (
 /**
   This function returns JSON property in text format for the given structure through
   supported Restful data interpreter.
-  
-  @param[in]    This            EFI_REST_JSON_STRUCTURE_PROTOCOL instance. 
+
+  @param[in]    This            EFI_REST_JSON_STRUCTURE_PROTOCOL instance.
   @param[in]    InterpProp      Given Restful resource.
   @param[out]   ResoruceRaw     Resource in RESTfuls service oriented property interpreted from given ResoruceRaw.
                                 Caller has to release the memory allocated for ResoruceRaw using DestoryJson function.
@@ -313,16 +316,23 @@ ComputerSystemToJson(
   OUT CHAR8 **ResoruceRaw
 )
 {
+  EFI_STATUS RedfishStatus;
+
   if (InterpProp == NULL || ResoruceRaw == NULL) {
     return EFI_INVALID_PARAMETER;
   }
-  return (EFI_STATUS)CS_To_ComputerSystem_V1_13_0_JSON (*((EFI_REDFISH_COMPUTERSYSTEM_V1_13_0_CS **)((UINT8 *)InterpProp + sizeof (EFI_REST_JSON_STRUCTURE_HEADER))), ResoruceRaw);  
+  DEBUG((DEBUG_MANAGEABILITY, "%a: Call to CS_To_ComputerSystem_V1_13_0_JSON\n", __func__));
+  RedfishStatus = (EFI_STATUS)CS_To_ComputerSystem_V1_13_0_JSON (*((EFI_REDFISH_COMPUTERSYSTEM_V1_13_0_CS **)((UINT8 *)InterpProp + sizeof (EFI_REST_JSON_STRUCTURE_HEADER))), ResoruceRaw);
+  if (EFI_ERROR(RedfishStatus)) {
+    DEBUG((DEBUG_MANAGEABILITY, "%a Call to CS_To_ComputerSystem_V1_13_0_JSON fail (%d)\n", __func__, RedfishStatus));
+  }
+  return RedfishStatus;
 }
 
 /**
   This function destory structure retunred in ComputerSystemToStruct.
-  
-  @param[in]    This                EFI_REST_JSON_STRUCTURE_PROTOCOL instance. 
+
+  @param[in]    This                EFI_REST_JSON_STRUCTURE_PROTOCOL instance.
   @param[in]    InterpProp          Given Restful resource.
 
   @retval EFI_SUCCESS
@@ -337,17 +347,17 @@ ComputerSystemDestoryStruct(
 )
 {
   EFI_REDFISH_COMPUTERSYSTEM_V1_13_0 *ComputerSystemV1_13_0;
-  
+
   ComputerSystemV1_13_0 = (EFI_REDFISH_COMPUTERSYSTEM_V1_13_0 *)InterpProp;
-  DestroyComputerSystem_V1_13_0_CS (ComputerSystemV1_13_0->ComputerSystem); 
+  DestroyComputerSystem_V1_13_0_CS (ComputerSystemV1_13_0->ComputerSystem);
   return EFI_SUCCESS;
 }
 
 /**
   This function destory JSON raw text returned from ComputerSystemFromStruct
-  
-  @param[in]    This                EFI_REST_JSON_STRUCTURE_PROTOCOL instance. 
-  @param[in]    RsrcTypeIdentifier  Resource type identifier.  
+
+  @param[in]    This                EFI_REST_JSON_STRUCTURE_PROTOCOL instance.
+  @param[in]    RsrcTypeIdentifier  Resource type identifier.
   @param[in]    ResoruceRaw         JSON raw text.
 
   @retval EFI_SUCCESS
@@ -358,7 +368,7 @@ EFI_STATUS
 EFIAPI
 ComputerSystemDestoryJson(
   IN EFI_REST_JSON_STRUCTURE_PROTOCOL *This,
-  IN EFI_REST_JSON_RESOURCE_TYPE_IDENTIFIER *RsrcIdentifier,  
+  IN EFI_REST_JSON_RESOURCE_TYPE_IDENTIFIER *RsrcIdentifier,
   IN CHAR8 *ResoruceRaw
 )
 {
@@ -385,7 +395,7 @@ RedfishComputerSystem_V1_13_0EntryPoint (
   )
 {
   EFI_STATUS Status;
-                      
+
   if (mRestJsonStructureProt == NULL) {
     Status = gBS->LocateProtocol(&gEfiRestJsonStructureProtocolGuid, NULL, (VOID **)&mRestJsonStructureProt);
     if ((EFI_ERROR (Status))) {
