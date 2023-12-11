@@ -63,13 +63,15 @@ RedfishConsumeResourceCommon (
   //
   // Check ETAG to see if we need to consume it
   //
-  if (CheckEtag (Private->Uri, HeaderEtag, NULL)) {
-    //
-    // No change
-    //
-    DEBUG ((REDFISH_DEBUG_TRACE, "%a: ETAG: %s has no change, ignore consume action\n", __FUNCTION__, Private->Uri));
-    Status = EFI_SUCCESS;
-    goto ON_RELEASE;
+  if (HeaderEtag != NULL) {
+    if (CheckEtag(Private->Uri, HeaderEtag, NULL)) {
+      //
+      // No change
+      //
+      DEBUG ((REDFISH_DEBUG_TRACE, "%a: ETAG: %s has no change, ignore consume action\n", __FUNCTION__, Private->Uri));
+      Status = EFI_SUCCESS;
+      goto ON_RELEASE;
+    }
   }
 
   //
@@ -83,6 +85,7 @@ RedfishConsumeResourceCommon (
   //
   // Handle BOOT->BOOTORDER
   //
+/*
   if (ComputerSystemCs->Boot->BootOrder != NULL) {
     //
     // Find corresponding configure language for collection resource.
@@ -97,6 +100,49 @@ RedfishConsumeResourceCommon (
       FreePool (ConfigureLang);
     } else {
       DEBUG ((DEBUG_ERROR, "%a: can not get configure language for URI: %s\n", __FUNCTION__, Private->Uri));
+    }
+  }
+*/
+
+  //
+  // Handle BOOT->BOOTSOURCEOVERRIDEENABLED
+  //
+  if (ComputerSystemCs->Boot->BootSourceOverrideEnabled != NULL) {
+    //
+    // Find corresponding configure language for collection resource.
+    //
+    ConfigureLang = GetConfigureLang ("/redfish/v1/Systems/system", "Boot/BootSourceOverrideEnabled");
+    //ConfigureLang = GetConfigureLang (ComputerSystemCs->odata_id, "Boot/BootSourceOverrideEnabled");
+    if (ConfigureLang != NULL) {
+      Status = ApplyFeatureSettingsStringType (RESOURCE_SCHEMA, RESOURCE_SCHEMA_VERSION, ConfigureLang, ComputerSystemCs->Boot->BootSourceOverrideEnabled);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a, apply setting for %s failed: %r\n", __func__, ConfigureLang, Status));
+      }
+
+      FreePool (ConfigureLang);
+    } else {
+      DEBUG ((DEBUG_ERROR, "%a, can not get configure language for URI: %s\n", __func__, Private->Uri));
+    }
+  }
+
+  //
+  // Handle BOOT->BOOTSOURCEOVERRIDETARGET
+  //
+  if (ComputerSystemCs->Boot->BootSourceOverrideTarget != NULL) {
+    //
+    // Find corresponding configure language for collection resource.
+    //
+    ConfigureLang = GetConfigureLang ("/redfish/v1/Systems/system", "Boot/BootSourceOverrideTarget");
+    //ConfigureLang = GetConfigureLang (ComputerSystemCs->odata_id, "Boot/BootSourceOverrideTarget");
+    if (ConfigureLang != NULL) {
+      Status = ApplyFeatureSettingsStringType (RESOURCE_SCHEMA, RESOURCE_SCHEMA_VERSION, ConfigureLang, ComputerSystemCs->Boot->BootSourceOverrideTarget);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a, apply setting for %s failed: %r\n", __func__, ConfigureLang, Status));
+      }
+
+      FreePool (ConfigureLang);
+    } else {
+      DEBUG ((DEBUG_ERROR, "%a, can not get configure language for URI: %s\n", __func__, Private->Uri));
     }
   }
 

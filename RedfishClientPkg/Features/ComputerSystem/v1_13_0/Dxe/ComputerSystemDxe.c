@@ -141,6 +141,7 @@ RedfishResourceConsumeResource (
     Private->Uri     = PendingSettingUri;
     ExpectedResponse = &PendingSettingResponse;
   } else {
+    DEBUG ((REDFISH_DEBUG_TRACE, "%a: No @Redfish.Settings is found\n", __FUNCTION__));
     Private->Uri     = Uri;
     ExpectedResponse = &Response;
   }
@@ -157,7 +158,7 @@ RedfishResourceConsumeResource (
   Etag   = NULL;
   Status = GetEtagAndLocation (ExpectedResponse, &Etag, NULL);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: failed to get ETag from HTTP header\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a: No ETag found in HTTP header or @odata.etag.\n", __FUNCTION__));
   }
 
   Status = RedfishConsumeResourceCommon (Private, Private->Json, Etag);
