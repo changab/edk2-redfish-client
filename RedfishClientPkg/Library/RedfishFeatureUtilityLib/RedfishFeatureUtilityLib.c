@@ -1915,7 +1915,7 @@ CreatePayloadToPatchResource (
   IN  REDFISH_SERVICE  *Service,
   IN  REDFISH_PAYLOAD  *TargetPayload,
   IN  CHAR8            *Json,
-  OUT CHAR8            **Etag
+  OUT CHAR8            **Etag OPTIONAL
   )
 {
   REDFISH_PAYLOAD   Payload;
@@ -1923,7 +1923,7 @@ CreatePayloadToPatchResource (
   REDFISH_RESPONSE  PostResponse;
   EFI_STATUS        Status;
 
-  if ((Service == NULL) || (TargetPayload == NULL) || IS_EMPTY_STRING (Json) || (Etag == NULL)) {
+  if ((Service == NULL) || (TargetPayload == NULL) || IS_EMPTY_STRING (Json)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -1994,7 +1994,7 @@ CreatePayloadToPostResource (
   IN  REDFISH_PAYLOAD  *TargetPayload,
   IN  CHAR8            *Json,
   OUT EFI_STRING       *Location,
-  OUT CHAR8            **Etag
+  OUT CHAR8            **Etag OPTIONAL
   )
 {
   REDFISH_PAYLOAD   Payload;
@@ -2002,7 +2002,7 @@ CreatePayloadToPostResource (
   REDFISH_RESPONSE  PostResponse;
   EFI_STATUS        Status;
 
-  if ((Service == NULL) || (TargetPayload == NULL) || IS_EMPTY_STRING (Json) || (Location == NULL) || (Etag == NULL)) {
+  if ((Service == NULL) || (TargetPayload == NULL) || IS_EMPTY_STRING (Json) || (Location == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -2032,10 +2032,10 @@ CreatePayloadToPostResource (
   //
   // per Redfish spec. the URL of new resource will be returned in "Location" header.
   //
-  Status = GetEtagAndLocation (&PostResponse, Etag, Location);
-  if (EFI_ERROR (Status)) {
-    Status = EFI_DEVICE_ERROR;
-  }
+  //Status = GetEtagAndLocation (&PostResponse, Etag, Location);
+  //if (EFI_ERROR (Status)) {
+  //  Status = EFI_DEVICE_ERROR;
+  //}
 
   RedfishFreeResponse (
     PostResponse.StatusCode,
