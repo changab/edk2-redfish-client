@@ -232,8 +232,10 @@ ComputerSystemToStruct (
     return EFI_UNSUPPORTED;
   }
 
+  DEBUG((DEBUG_MANAGEABILITY, "%a: Call to Json_ComputerSystem_V1_13_0_To_CS\n", __func__));
   Status = (EFI_STATUS)Json_ComputerSystem_V1_13_0_To_CS (ResoruceRaw, &ComputerSystemV1_13_0Cs);
   if (EFI_ERROR (Status)){
+      DEBUG((DEBUG_ERROR, "%a: Call to Json_ComputerSystem_V1_13_0_To_CS failed (%d)\n", __func__, Status));
     return Status;
   }
   ComputerSystemV1_13_0 = (EFI_REDFISH_COMPUTERSYSTEM_V1_13_0 *)AllocateZeroPool (
