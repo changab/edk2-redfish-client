@@ -57,7 +57,7 @@ RedfishResourceProvisioningResource (
   }
 
   ZeroMem (&Response, sizeof (Response));
-  Status = RedfishHttpGetResource (Private->RedfishService, Uri, &Response, TRUE);
+  Status = RedfishHttpGetResource (Private->RedfishService, Uri, NULL, &Response, TRUE);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: get resource from: %s failed\n", __func__, Uri));
     return Status;
@@ -80,15 +80,8 @@ RedfishResourceProvisioningResource (
   //
   // Release resource
   //
-  if (Private->Payload != NULL) {
-    RedfishFreeResponse (
-      Response.StatusCode,
-      Response.HeaderCount,
-      Response.Headers,
-      Response.Payload
-      );
-    Private->Payload = NULL;
-  }
+  RedfishHttpFreeResponse (&Response);
+  Private->Payload = NULL;
 
   return Status;
 }
@@ -129,7 +122,7 @@ RedfishResourceConsumeResource (
   }
 
   ZeroMem (&Response, sizeof (Response));
-  Status = RedfishHttpGetResource (Private->RedfishService, Uri, &Response, TRUE);
+  Status = RedfishHttpGetResource (Private->RedfishService, Uri, NULL, &Response, TRUE);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: get resource from: %s failed\n", __func__, Uri));
     return Status;
@@ -181,27 +174,9 @@ RedfishResourceConsumeResource (
   //
   // Release resource
   //
-  if (Private->Payload != NULL) {
-    if (Response.Payload != NULL) {
-      RedfishFreeResponse (
-        Response.StatusCode,
-        Response.HeaderCount,
-        Response.Headers,
-        Response.Payload
-        );
-    }
-
-    if (PendingSettingResponse.Payload != NULL) {
-      RedfishFreeResponse (
-        PendingSettingResponse.StatusCode,
-        PendingSettingResponse.HeaderCount,
-        PendingSettingResponse.Headers,
-        PendingSettingResponse.Payload
-        );
-    }
-
-    Private->Payload = NULL;
-  }
+  RedfishHttpFreeResponse (&Response);
+  RedfishHttpFreeResponse (&PendingSettingResponse);
+  Private->Payload = NULL;
 
   if (Private->Json != NULL) {
     FreePool (Private->Json);
@@ -275,7 +250,7 @@ RedfishResourceUpdate (
   }
 
   ZeroMem (&Response, sizeof (Response));
-  Status = RedfishHttpGetResource (Private->RedfishService, Uri, &Response, TRUE);
+  Status = RedfishHttpGetResource (Private->RedfishService, Uri, NULL, &Response, TRUE);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: get resource from: %s failed\n", __func__, Uri));
     return Status;
@@ -301,16 +276,8 @@ RedfishResourceUpdate (
   //
   // Release resource
   //
-  if (Private->Payload != NULL) {
-    RedfishFreeResponse (
-      Response.StatusCode,
-      Response.HeaderCount,
-      Response.Headers,
-      Response.Payload
-      );
-    RedfishHttpResetResource (Uri);
-    Private->Payload = NULL;
-  }
+  RedfishHttpFreeResponse (&Response);
+  Private->Payload = NULL;
 
   if (Private->Json != NULL) {
     FreePool (Private->Json);
@@ -353,7 +320,7 @@ RedfishResourceCheck (
   }
 
   ZeroMem (&Response, sizeof (Response));
-  Status = RedfishHttpGetResource (Private->RedfishService, Uri, &Response, TRUE);
+  Status = RedfishHttpGetResource (Private->RedfishService, Uri, NULL, &Response, TRUE);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: get resource from: %s failed\n", __func__, Uri));
     return Status;
@@ -383,15 +350,8 @@ RedfishResourceCheck (
     FreePool (Etag);
   }
 
-  if (Private->Payload != NULL) {
-    RedfishFreeResponse (
-      Response.StatusCode,
-      Response.HeaderCount,
-      Response.Headers,
-      Response.Payload
-      );
-    Private->Payload = NULL;
-  }
+  RedfishHttpFreeResponse (&Response);
+  Private->Payload = NULL;
 
   if (Private->Json != NULL) {
     FreePool (Private->Json);
@@ -434,7 +394,7 @@ RedfishResourceIdentify (
   }
 
   ZeroMem (&Response, sizeof (Response));
-  Status = RedfishHttpGetResource (Private->RedfishService, Uri, &Response, TRUE);
+  Status = RedfishHttpGetResource (Private->RedfishService, Uri, NULL, &Response, TRUE);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: get resource from: %s failed\n", __func__, Uri));
     return Status;
@@ -455,15 +415,8 @@ RedfishResourceIdentify (
   //
   // Release resource
   //
-  if (Private->Payload != NULL) {
-    RedfishFreeResponse (
-      Response.StatusCode,
-      Response.HeaderCount,
-      Response.Headers,
-      Response.Payload
-      );
-    Private->Payload = NULL;
-  }
+  RedfishHttpFreeResponse (&Response);
+  Private->Payload = NULL;
 
   if (Private->Json != NULL) {
     FreePool (Private->Json);
@@ -543,11 +496,6 @@ RedfishResourceStop (
   if (Private->RedfishService != NULL) {
     RedfishCleanupService (Private->RedfishService);
     Private->RedfishService = NULL;
-  }
-
-  if (Private->Payload != NULL) {
-    RedfishCleanupPayload (Private->Payload);
-    Private->Payload = NULL;
   }
 
   return EFI_SUCCESS;
