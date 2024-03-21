@@ -37,6 +37,7 @@
 #string STR_TARGET_PXE                         #language en-US   "Pxe"
 #string STR_TARGET_USB                         #language en-US   "Usb"
 #string STR_TARGET_HDD                         #language en-US   "Hdd"
+#string STR_TARGET_CD                          #language en-US   "CD"
 #string STR_TARGET_BIOS_SETUP                  #language en-US   "Bios Setup Menu"
 #string STR_TARGET_UEFI                        #language en-US   "Uefi Target"
 #string STR_TARGET_UEFI_HTTP                   #language en-US   "Uefi Http"

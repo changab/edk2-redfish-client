@@ -67,6 +67,7 @@ formset
           option text = STRING_TOKEN(STR_TARGET_PXE),           value = STR_TARGET_PXE,         flags = 0;
           option text = STRING_TOKEN(STR_TARGET_USB),           value = STR_TARGET_USB,         flags = 0;
           option text = STRING_TOKEN(STR_TARGET_HDD),           value = STR_TARGET_HDD,         flags = 0;
+          option text = STRING_TOKEN(STR_TARGET_CD),            value = STR_TARGET_CD,          flags = 0;
           option text = STRING_TOKEN(STR_TARGET_BIOS_SETUP),    value = STR_TARGET_BIOS_SETUP,  flags = 0;
           option text = STRING_TOKEN(STR_TARGET_UEFI),          value = STR_TARGET_UEFI,        flags = 0;
           option text = STRING_TOKEN(STR_TARGET_UEFI_HTTP),     value = STR_TARGET_UEFI_HTTP,   flags = 0;
