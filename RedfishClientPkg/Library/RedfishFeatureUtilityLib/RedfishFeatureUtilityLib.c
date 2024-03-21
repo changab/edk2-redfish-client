@@ -2082,7 +2082,6 @@ GetConfigureLang (
   EFI_STRING  ResultStr;
   EFI_STRING  UnicodeUri;
   EFI_STATUS  Status;
-  EFI_STRING  StrFound;
 
   if (IS_EMPTY_STRING (Uri)) {
     return NULL;
@@ -2101,18 +2100,6 @@ GetConfigureLang (
   }
 
   ConfigLang = RedfishGetConfigLanguage (UnicodeUri);
-  if (ConfigLang == NULL) {
-    //
-    // @Redfish.Settings share the same schema as its parent.
-    // Remove "Settings" and try again.
-    //
-    StrFound = StrStr (UnicodeUri, L"/Settings");
-    if (StrFound != NULL) {
-      StrFound[0] = L'\0';
-      DEBUG ((REDFISH_DEBUG_TRACE, "%a: \"Settings\" found in URI, try: %s\n", __func__, UnicodeUri));
-      ConfigLang = RedfishGetConfigLanguage (UnicodeUri);
-    }
-  }
 
   FreePool (UnicodeUri);
 
@@ -2170,6 +2157,59 @@ RedfishSetRedfishUri (
   DEBUG ((REDFISH_DEBUG_TRACE, "%a: Saved: %s -> %s\n", __func__, ConfigLang, Uri));
 
   return mConfigLangMapProtocol->Set (mConfigLangMapProtocol, ConfigLang, Uri);
+}
+
+/**
+
+  Save Redfish SettingsObject URI in database for further use.
+
+  @param[in]    ParentUri         Parent URI of @Redfish.Settings property.
+  @param[in]    SettingObjectUri  Redfish SettingsObject Uri to save.
+
+  @retval  EFI_INVALID_PARAMETER  ParentUri or SettingObjectUri is NULL.
+  @retval  EFI_NOT_FOUND          Config language for ParentUri is not found.
+  @retval  EFI_SUCCESS            Redfish URI is saved with corresponding
+                                  config language.
+
+**/
+EFI_STATUS
+SetRedfishSettingsObjectsUri (
+  IN EFI_STRING  ParentUri,
+  IN EFI_STRING  SettingObjectUri
+)
+{
+  EFI_STATUS   Status;
+  EFI_STRING   ConfigLang;
+
+  if ((ParentUri == NULL) || (SettingObjectUri == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //
+  // Check if the SettingsObject URI already in the database.
+  //
+  ConfigLang = RedfishGetConfigLanguage (SettingObjectUri);
+  if (ConfigLang == NULL) {
+    //
+    // No config language of SettingsObject URI is found.
+    // Get the config language of parent URI because the data model of
+    // SettingsObject URI resource is the same as the data model of parent URI.
+    //
+    ConfigLang = RedfishGetConfigLanguage (ParentUri);
+    if (ConfigLang == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a: Failed to get the config language of parent URI that mandates SettingsObject - %s.\n", __func__, ParentUri));
+      return EFI_NOT_FOUND;
+    }
+
+    // Set the config language of settings URI using parent's URI config language.
+    Status = RedfishSetRedfishUri (ConfigLang, SettingObjectUri);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: Fails to set the config language of SettingsObject - %s.\n", __func__, SettingObjectUri));
+      return Status;
+    }
+    DEBUG ((DEBUG_INFO, "%a: Set the config language of SettingsObject - %s: SUCCESS.\n", __func__, SettingObjectUri));
+  }
+  return EFI_SUCCESS;
 }
 
 /**
@@ -3532,6 +3572,7 @@ CompareRedfishBooleanArrayValues (
   payload and URI to pending settings. Caller has to release "SettingPayload" and
   "SettingUri".
 
+  @param[in]  RedfishService  Instance of REDFISH_SERVICE
   @param[in]  Payload         Payload that may contain "@Redfish.Settings"
   @param[out] SettingPayload  Payload keeps pending settings.
   @param[out] SettingUri      URI to pending settings.
@@ -3552,6 +3593,7 @@ GetPendingSettings (
   EDKII_JSON_VALUE  JsonValue;
   UINTN             Index;
   EFI_STATUS        Status;
+  EFI_STRING        StrFound;
 
   if ((RedfishService == NULL) || (Payload == NULL) || (SettingResponse == NULL) || (SettingUri == NULL)) {
     return EFI_INVALID_PARAMETER;
@@ -3586,9 +3628,23 @@ GetPendingSettings (
       return Status;
     }
 
+    //
+    // Setting URI exists, check if settings URI is valid or not.
+    //
+    StrFound = StrStr (*SettingUri, L"/Settings");
+    if (StrFound != NULL) {
+      DEBUG ((REDFISH_DEBUG_TRACE, "%a: \"Settings\" found in URI: %s\n", __func__, *SettingUri));
+    } else {
+      StrFound = StrStr (*SettingUri, L"/SD");
+      if (StrFound != NULL) {
+        DEBUG ((REDFISH_DEBUG_TRACE, "%a: \"SD\" found in URI: %s\n", __func__, *SettingUri));
+      } else {
+        DEBUG ((DEBUG_ERROR, "%a: Not an valid @redfish.settings URI\n", __func__, *SettingUri));
+        ASSERT (FALSE);
+      }
+    }
     return EFI_SUCCESS;
   }
-
   return EFI_NOT_FOUND;
 }
 
