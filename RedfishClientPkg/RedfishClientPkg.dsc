@@ -60,5 +60,6 @@
 
   RedfishClientPkg/Library/RedfishFeatureUtilityLib/RedfishFeatureUtilityLib.inf
   RedfishClientPkg/Library/RedfishAddendumLib/RedfishAddendumLib.inf
+  RedfishClientPkg/Library/RedfishSystemTopologyLibNull/RedfishSystemTopologyLibNull.inf
 
   !include RedfishClientPkg/RedfishClient.dsc.inc
