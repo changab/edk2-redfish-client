@@ -27,6 +27,16 @@ typedef struct {
   REDFISH_FEATURE_ARRAY_TYPE_CONFIG_LANG    *List;
 } REDFISH_FEATURE_ARRAY_TYPE_CONFIG_LANG_LIST;
 
+//
+// Definition of REDFISH_FEATURE_ARRAY_TYPE_CONFIG_LANG_LIST
+//
+typedef struct {
+  UINTN                                     Count;    // Count of URI array member in List
+  CHAR8                                     **List;   // Pointer to a pointer array, each of entry points to the URI string.
+                                                      // This memory block must be freed by the consumer when it is no longer
+                                                      // needed.
+} REDFISH_FEATURE_ARRAY_TYPE_URI;
+
 typedef struct _EDKII_REDFISH_FEATURE_INTERCHANGE_DATA_PROTOCOL EDKII_REDFISH_FEATURE_INTERCHANGE_DATA_PROTOCOL;
 
 #define EDKII_REDFISH_FEATURE_INTERCHANGE_DATA_PROTOCOL_GUID \
@@ -38,19 +48,25 @@ typedef enum {
   InformationTypeNone = 0,                       ///< Invalid information.
   InformationTypeCollectionMemberUri,            ///< URI to the new created collection member.
   InformationTypeCollectionMemberConfigLanguage, ///< URI to the new created collection member.
+  InformationTypeArrayMemberUri,                 ///< Array of URI to the new created resource links.
   InformationTypeMax
 } RESOURCE_INFORMATION_EXCHANGE_TYPE;
 
 typedef struct {
-  RESOURCE_INFORMATION_EXCHANGE_TYPE    Type;
+  RESOURCE_INFORMATION_EXCHANGE_TYPE    Type;         ///< Type of the exchange information.
   EFI_STRING                            ParentUri;    ///< The parent URI (in configure language) of the resource to process.
   EFI_STRING                            PropertyName; ///< The property name of the resource to process.
   EFI_STRING                            FullUri;      ///< The full URI (in configure language) of the resource to process.
+  VOID                                  *ResourceTypeSendInformation; ///< This memory block must be freed by the consumer when it is no longer
+                                                                      ///<  needed.
 } RESOURCE_INFORMATION_SEND;
 
 typedef struct {
-  RESOURCE_INFORMATION_EXCHANGE_TYPE             Type;
-  REDFISH_FEATURE_ARRAY_TYPE_CONFIG_LANG_LIST    ConfigureLanguageList;
+  RESOURCE_INFORMATION_EXCHANGE_TYPE             Type;                              ///< Type of the exchange information.
+  REDFISH_FEATURE_ARRAY_TYPE_CONFIG_LANG_LIST    ConfigureLanguageList;             ///< The array of config language list.
+  VOID                                           *ResourceTypeReturnedInformation;  ///< Additinoal resource type specific returing information.
+                                                                                    ///< This memory block must be freed by the consumer when it is no longer
+                                                                                    ///< needed.
 } RESOURCE_INFORMATION_RETURNED;
 
 typedef struct {
