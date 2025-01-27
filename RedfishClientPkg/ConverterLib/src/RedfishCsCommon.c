@@ -1378,6 +1378,7 @@ InsertJsonLinkArrayObj (
 {
   json_t                   *ArrayJson;
   json_t                   *ArrayMember;
+  json_t                   *OdataIdObj;
   RedfishCS_Type_Uri_Data  *ThisLink;
 
   if (ParentJsonObj == NULL) {
@@ -1401,14 +1402,19 @@ InsertJsonLinkArrayObj (
 
     if (ThisLink->Uri != (RedfishCS_char *)NULL) {
       ArrayMember = json_string (ThisLink->Uri);
-      if (json_array_append_new (ArrayJson, ArrayMember) != 0) {
+      OdataIdObj = json_object();
+      if (OdataIdObj == NULL) {
+        goto ExitError;
+      }
+      json_object_set_new (OdataIdObj, "@odata.id", ArrayMember);
+      if (json_array_append_new (ArrayJson, OdataIdObj) != 0) {
         return RedfishCS_status_unsupported;
       }
     }
 
     if (IsLinkAtEnd (LinkArray, &ThisLink->Header.LinkEntry)) {
       if (json_object_set_new (ParentJsonObj, Key, ArrayJson) == -1) {
-        return RedfishCS_status_unsupported;
+        goto ExitError;
       }
 
       return RedfishCS_status_success;
@@ -1417,7 +1423,9 @@ InsertJsonLinkArrayObj (
     ThisLink = (RedfishCS_Type_Uri_Data *)GetNextLink (LinkArray, &ThisLink->Header.LinkEntry);
   }
 
-  return RedfishCS_status_success;
+ExitError:
+  json_decref(ArrayJson);
+  return RedfishCS_status_unsupported;
 }
 
 /**
