@@ -29,13 +29,14 @@ on:
   push:
     branches:
      - main
+     - master
      - VenicePI_SP7_*
      - WeeklyBIOSs/*
      - Sandbox*
 
 jobs:
   edk2-redfish-submodule:
-    uses: PFO/ivv-workflows/.github/workflows/submodule-updater.yml@main
+    uses: PFO/ivv-workflows/.github/workflows/edk2-submodule-updater.yml@main
     with:
       superProjectRepo: PFO/amd-edk2-collection
       superProjectBranch: ${{ github.ref_name }}
