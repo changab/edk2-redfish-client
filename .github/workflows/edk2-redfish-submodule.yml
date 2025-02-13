@@ -32,7 +32,7 @@ on:
      - master
      - VenicePI_SP7_*
      - WeeklyBIOSs/*
-     - Sandbox*
+     - Sandbox**
 
 jobs:
   edk2-redfish-submodule:
