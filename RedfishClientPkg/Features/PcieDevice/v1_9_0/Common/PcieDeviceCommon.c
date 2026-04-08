@@ -1,7 +1,7 @@
 /** @file
   Redfish feature driver implementation - common functions
 
-  Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.<BR>
+  Copyright (C) 2026 Advanced Micro Devices, Inc. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -41,78 +41,122 @@ RedfishConsumeResourceCommon (
   return EFI_UNSUPPORTED;
 }
 
+/**
+  Patch PCIe interface properties into JSON output.
+
+  @param[in]      ThisPcieTopology  Pointer to REDFISH_SYSTEM_TOPOLOGY_PCIE.
+  @param[in,out]  Json              On input, the original JSON.
+                                    On output, the patched JSON.
+
+  @retval EFI_SUCCESS               JSON was patched successfully.
+  @retval EFI_INVALID_PARAMETER     Input parameter is NULL.
+  @retval EFI_OUT_OF_RESOURCES      Failed to allocate memory.
+
+**/
 EFI_STATUS
-PatchPCIeInterface(
+PatchPCIeInterface (
   IN      REDFISH_SYSTEM_TOPOLOGY_PCIE  *ThisPcieTopology,
   IN OUT  CHAR8                         **Json
   )
 {
-  CHAR8   *PatchedJson = NULL;
-  CHAR8   *OriginalJson;
-  UINTN   PatchedJsonLen;
+  CHAR8  *PatchedJson;
+  CHAR8  *OriginalJson;
+  CHAR8  *JsonContent;
+  UINTN  PatchedJsonLen;
 
+  if ((ThisPcieTopology == NULL) || (Json == NULL) || (*Json == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  PatchedJson  = NULL;
   OriginalJson = *Json;
 
-  PatchedJsonLen = AsciiStrLen(OriginalJson) * 2;
+  //
+  // Find the content after the opening brace of the JSON object.
+  //
+  JsonContent = OriginalJson;
+  while ((*JsonContent != '\0') && (*JsonContent != '{')) {
+    JsonContent++;
+  }
+
+  if (*JsonContent == '{') {
+    JsonContent++;
+  }
+
+  PatchedJsonLen = AsciiStrLen (OriginalJson) * 2;
 
   PatchedJson = AllocateZeroPool (PatchedJsonLen);
-  if(PatchedJson != NULL) {
-    AsciiSPrint(PatchedJson,
-                PatchedJsonLen,
-                "{\n\"MaxLanes\": %d,\n\"LanesInUse\": %d,\n\"MaxPCIeType\": \"%d\",\n\"PCIeType\": \"%d\",\n%a",
-                ThisPcieTopology->MaxLanes,
-                ThisPcieTopology->LanesInUse,
-                ThisPcieTopology->MaxPCIeType,
-                ThisPcieTopology->PCIeType,
-                OriginalJson + 4);
-
-    FreePool(*Json);
-    *Json = PatchedJson;
+  if (PatchedJson == NULL) {
+    return EFI_OUT_OF_RESOURCES;
   }
+
+  AsciiSPrint (
+    PatchedJson,
+    PatchedJsonLen,
+    "{\n\"MaxLanes\": %d,\n\"LanesInUse\": %d,\n\"MaxPCIeType\": \"%d\",\n\"PCIeType\": \"%d\",\n%a",
+    ThisPcieTopology->MaxLanes,
+    ThisPcieTopology->LanesInUse,
+    ThisPcieTopology->MaxPCIeType,
+    ThisPcieTopology->PCIeType,
+    JsonContent
+    );
+
+  FreePool (*Json);
+  *Json = PatchedJson;
 
   return EFI_SUCCESS;
 }
 
 /**
-  Provisioning one redfish PCIrDevice resource
+  Provisioning one redfish PCIeDevice resource.
 
-  @param[in]    JsonStructProtocol  Pointer EFI_REST_JSON_STRUCTURE_PROTOCOL.
+  @param[in]    JsonStructProtocol  Pointer to EFI_REST_JSON_STRUCTURE_PROTOCOL.
   @param[in]    InputJson           Input PCIeDevice JSON template.
   @param[in]    ThisPcieTopology    Pointer to this REDFISH_SYSTEM_TOPOLOGY_PCIE.
   @param[in]    IsCreateOrUpdate    Is to create the new resource of PCIeDevice.
   @param[out]   ResultJson          The result JSON of new PCIeDevice resource.
-  @retval EFI_STATUS                Some error happened.
+
+  @retval EFI_SUCCESS               PCIeDevice resource is provisioned successfully.
+  @retval Others                    Some error happened.
 
 **/
 EFI_STATUS
 ProvisioningPcieProperties (
-  IN  EFI_REST_JSON_STRUCTURE_PROTOCOL *JsonStructProtocol,
-  IN  CHAR8                            *InputJson,
-  IN  REDFISH_SYSTEM_TOPOLOGY_PCIE     *ThisPcieTopology,
+  IN  EFI_REST_JSON_STRUCTURE_PROTOCOL  *JsonStructProtocol,
+  IN  CHAR8                             *InputJson,
+  IN  REDFISH_SYSTEM_TOPOLOGY_PCIE      *ThisPcieTopology,
   IN  BOOLEAN                           IsCreateOrUpdate,
   OUT CHAR8                             **ResultJson
   )
 {
-  //
-  // We dont use IsCreateOrUpdate to update PCIeDevice resource
-  // at the moment as we are provision the inventory information.
-  //
   EFI_REDFISH_PCIEDEVICE_V1_9_0     *PcieDevice;
   EFI_REDFISH_PCIEDEVICE_V1_9_0_CS  *PcieDeviceCs;
   EFI_STATUS                        Status;
   CHAR8                             *PatchedJson;
-  UINT8                              StringLength = 17;
+  UINTN                             StringLength;
 
   if ((JsonStructProtocol == NULL) || (ResultJson == NULL) || IS_EMPTY_STRING (InputJson)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  DEBUG ((REDFISH_DEBUG_TRACE, "%a provision PCIeDevice with: %s\n", __func__, (IsCreateOrUpdate ? L"Provision resource" : L"Update resource")));
+  //
+  // 17 bytes covers "%08x%08x" (16 hex + null) for SerialNumber,
+  // "Single Function" (15 + null) for DeviceType, and "%04x" for
+  // Manufacturer/Model. Use 32 for safety margin.
+  //
+  StringLength = 32;
 
-  *ResultJson     = NULL;
-  PcieDevice      = NULL;
-  PatchedJson     = NULL;
-  
+  DEBUG ((
+    REDFISH_DEBUG_TRACE,
+    "%a provision PCIeDevice with: %s\n",
+    __func__,
+    (IsCreateOrUpdate ? L"Provision resource" : L"Update resource")
+    ));
+
+  *ResultJson = NULL;
+  PcieDevice  = NULL;
+  PatchedJson = NULL;
+
   if (PcdGetBool (PcdRedfishCompatibleSchemaSupport)) {
     Status = RedfishSetCompatibleSchemaVersion (&mSchemaInfo, InputJson, &PatchedJson);
     if (EFI_ERROR (Status)) {
@@ -138,41 +182,50 @@ ProvisioningPcieProperties (
   // Handle SerialNumber
   //
   PcieDeviceCs->SerialNumber = AllocateZeroPool (StringLength);
-  if(PcieDeviceCs->SerialNumber != NULL) {
-    AsciiSPrint(PcieDeviceCs->SerialNumber,
-                StringLength,
-                "%08x%08x",
-                ThisPcieTopology->SerialNumber.Upper, 
-                ThisPcieTopology->SerialNumber.Lower);
-    DEBUG((DEBUG_INFO, "Serial Number = %a\n", PcieDeviceCs->SerialNumber));
+  if (PcieDeviceCs->SerialNumber != NULL) {
+    AsciiSPrint (
+      PcieDeviceCs->SerialNumber,
+      StringLength,
+      "%08x%08x",
+      ThisPcieTopology->SerialNumber.Upper,
+      ThisPcieTopology->SerialNumber.Lower
+      );
+    DEBUG ((DEBUG_INFO, "Serial Number = %a\n", PcieDeviceCs->SerialNumber));
   }
 
   PcieDeviceCs->DeviceType = AllocateZeroPool (StringLength);
-  if(PcieDeviceCs->DeviceType != NULL) {
-    AsciiSPrint(PcieDeviceCs->DeviceType,
-                StringLength,
-                "%a",
-                ThisPcieTopology->DeviceType ? "Multi Function" : "Single Function");
-    DEBUG((DEBUG_INFO, "Device Type = %a\n", PcieDeviceCs->DeviceType));
+  if (PcieDeviceCs->DeviceType != NULL) {
+    AsciiSPrint (
+      PcieDeviceCs->DeviceType,
+      StringLength,
+      "%a",
+      ThisPcieTopology->DeviceType ? "Multi Function" : "Single Function"
+      );
+    DEBUG ((DEBUG_INFO, "Device Type = %a\n", PcieDeviceCs->DeviceType));
   }
 
   PcieDeviceCs->Manufacturer = AllocateZeroPool (StringLength);
-  if(PcieDeviceCs->Manufacturer != NULL) {
-    AsciiSPrint(PcieDeviceCs->Manufacturer,
-                StringLength,
-                "%04x",
-                ThisPcieTopology->Manufacturer);
-    DEBUG((DEBUG_INFO, "Manufacturer = %a\n", PcieDeviceCs->Manufacturer));
+  if (PcieDeviceCs->Manufacturer != NULL) {
+    AsciiSPrint (
+      PcieDeviceCs->Manufacturer,
+      StringLength,
+      "%04x",
+      ThisPcieTopology->Manufacturer
+      );
+    DEBUG ((DEBUG_INFO, "Manufacturer = %a\n", PcieDeviceCs->Manufacturer));
   }
 
   PcieDeviceCs->Model = AllocateZeroPool (StringLength);
-  if(PcieDeviceCs->Model != NULL) {
-    AsciiSPrint(PcieDeviceCs->Model,
-                StringLength,
-                "%04x",
-                ThisPcieTopology->Model);
-    DEBUG((DEBUG_INFO, "Model = %a\n", PcieDeviceCs->Model));
+  if (PcieDeviceCs->Model != NULL) {
+    AsciiSPrint (
+      PcieDeviceCs->Model,
+      StringLength,
+      "%04x",
+      ThisPcieTopology->Model
+      );
+    DEBUG ((DEBUG_INFO, "Model = %a\n", PcieDeviceCs->Model));
   }
+
   //
   // Convert C structure back to JSON text.
   //
@@ -181,11 +234,14 @@ ProvisioningPcieProperties (
                                  (EFI_REST_JSON_STRUCTURE_HEADER *)PcieDevice,
                                  ResultJson
                                  );
-
-  PatchPCIeInterface(ThisPcieTopology, ResultJson);
-
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a, ToJson() failed: %r\n", __func__, Status));
+    goto ON_RELEASE;
+  }
+
+  Status = PatchPCIeInterface (ThisPcieTopology, ResultJson);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a, PatchPCIeInterface() failed: %r\n", __func__, Status));
   }
 
 ON_RELEASE:
@@ -207,13 +263,15 @@ ON_RELEASE:
 }
 
 /**
-  Provisioning one redfish PCIrDevice resource
+  Provisioning one redfish PCIeDevice resource.
 
   @param[in]    Private           Pointer to REDFISH_RESOURCE_COMMON_PRIVATE.
   @param[in]    ThisPcieTopology  Pointer to this REDFISH_SYSTEM_TOPOLOGY_PCIE.
   @param[in]    PciIndexId        Zero-based index of PCIe device.
   @param[out]   UriReturned       The URI returned that contains newly created resource.
-  @retval EFI_STATUS             Some error happened.
+
+  @retval EFI_SUCCESS             PCIeDevice resource is provisioned successfully.
+  @retval Others                  Some error happened.
 
 **/
 EFI_STATUS
@@ -230,12 +288,14 @@ ProvisioningPcieDeviceResource (
   CHAR16            ResourceId[16];
   CHAR16            *UriInstance;
   UINTN             SizeString;
+  UINTN             UriLen;
   REDFISH_RESPONSE  Response;
 
-  if ((Private == NULL) || ( ThisPcieTopology == NULL) || (UriReturned == NULL)) {
+  if ((Private == NULL) || (ThisPcieTopology == NULL) || (UriReturned == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
+  *UriReturned        = NULL;
   Json                = NULL;
   UriInstance         = NULL;
   NewResourceLocation = NULL;
@@ -251,19 +311,27 @@ ProvisioningPcieDeviceResource (
              &Json
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a, provisioning resource for #%d PCIe device is failed: %r\n", __func__, PciIndexId, Status));
+    DEBUG ((
+      DEBUG_ERROR,
+      "%a, provisioning resource for #%d PCIe device failed: %r\n",
+      __func__,
+      PciIndexId,
+      Status
+      ));
     return Status;
   }
 
   //
   // Generate the URI for the new resource
   //
-  SizeString = (StrLen (Private->Uri) + StrLen (L"/") + StrLen (ResourceId) + 1) * sizeof (CHAR16);
+  SizeString  = (StrLen (Private->Uri) + StrLen (L"/") + StrLen (ResourceId) + 1) * sizeof (CHAR16);
   UriInstance = AllocateZeroPool (SizeString);
   if (UriInstance == NULL) {
-    DEBUG ((DEBUG_ERROR, "%a, Memory allocate fail for Generating the URI of the new resource: %r\n", __func__, Status));
-    return Status;
+    DEBUG ((DEBUG_ERROR, "%a, failed to allocate memory for URI\n", __func__));
+    Status = EFI_OUT_OF_RESOURCES;
+    goto RELEASE_RESOURCE;
   }
+
   UnicodeSPrint (UriInstance, SizeString, L"%s%s%s", Private->Uri, L"/", ResourceId);
   Status = RedfishHttpPostResource (Private->RedfishService, UriInstance, Json, &Response);
   if (EFI_ERROR (Status)) {
@@ -285,9 +353,17 @@ ProvisioningPcieDeviceResource (
   //
   if (NewResourceLocation != NULL) {
     DEBUG ((DEBUG_MANAGEABILITY, "%a: Location: %s\n", __func__, NewResourceLocation));
+
+    UriLen       = StrLen (NewResourceLocation) + 1;
+    *UriReturned = AllocateZeroPool (UriLen);
+    if (*UriReturned != NULL) {
+      UnicodeStrToAsciiStrS (NewResourceLocation, *UriReturned, UriLen);
+    }
   }
 
 RELEASE_RESOURCE:
+  RedfishHttpFreeResponse (&Response);
+
   if (NewResourceLocation != NULL) {
     FreePool (NewResourceLocation);
   }
@@ -297,16 +373,19 @@ RELEASE_RESOURCE:
   }
 
   if (UriInstance != NULL) {
-    FreePool(UriInstance);
+    FreePool (UriInstance);
   }
 
   return Status;
 }
+
 /**
-  Provisioning redfish PCIrDevice resources
+  Provisioning redfish PCIeDevice resources.
 
   @param[in]   Private             Pointer to REDFISH_RESOURCE_COMMON_PRIVATE.
-  @retval EFI_STATUS               Some error happened.
+
+  @retval EFI_SUCCESS              PCIeDevice resources are provisioned successfully.
+  @retval Others                   Some error happened.
 
 **/
 EFI_STATUS
@@ -325,10 +404,12 @@ ProvisioningPcieDeviceResources (
   if (Private == NULL) {
     return EFI_INVALID_PARAMETER;
   }
-  Status = RedfishSystemTopologyGetCount (REDFISH_SYSTEM_TOPOLOGY_TYPE_PCIE, &NumberOfPcie);
-  DEBUG((DEBUG_INFO, "NumberOfPcie = %d\n", NumberOfPcie));
+
+  NumberOfPcie = 0;
+  Status       = RedfishSystemTopologyGetCount (REDFISH_SYSTEM_TOPOLOGY_TYPE_PCIE, &NumberOfPcie);
+  DEBUG ((DEBUG_INFO, "NumberOfPcie = %d\n", NumberOfPcie));
   if (EFI_ERROR (Status)) {
-    if (Status == EFI_NOT_FOUND || NumberOfPcie == 0) {
+    if ((Status == EFI_NOT_FOUND) || (NumberOfPcie == 0)) {
       DEBUG ((REDFISH_DEBUG_TRACE, "%a, No PCIe device to provision.\n", __func__));
       return EFI_SUCCESS;
     } else {
@@ -337,57 +418,73 @@ ProvisioningPcieDeviceResources (
     }
   }
 
-  PcieResourceUri = AllocateZeroPool (sizeof(CHAR8 *) * NumberOfPcie);
+  PcieResourceUri = AllocateZeroPool (sizeof (CHAR8 *) * NumberOfPcie);
   if (PcieResourceUri == NULL) {
     DEBUG ((DEBUG_ERROR, "%a: Not enough memory for PCIeResourceUri\n", __func__));
     return EFI_OUT_OF_RESOURCES;
   }
+
   PciTopology = NULL;
   UriReturned = PcieResourceUri;
-  Index       = 0;
-  do {
+
+  for (Index = 0; Index < NumberOfPcie; Index++) {
     Status = RedfishGetSystemTopologyGetEntry (REDFISH_SYSTEM_TOPOLOGY_TYPE_PCIE, &PciTopology);
-    DEBUG((DEBUG_INFO, "RedfishGetSystemTopologyGetEntry Status = %r\n", Status));
-    DEBUG((DEBUG_INFO, "PciTopology Address = 0x%x\n", PciTopology));
-    if (!EFI_ERROR (Status)) {
-      Status = ProvisioningPcieDeviceResource(Private, &PciTopology->DeviceType.PcieDevice, Index, UriReturned);
-      DEBUG((DEBUG_INFO, "ProvisioningPcieDeviceResource Status = %r\n", Status));
-      if (EFI_ERROR(Status)) {
-        DEBUG ((DEBUG_ERROR, "%a: Failed to provision this PCIe device.\n", __func__));
-      }
+    if (EFI_ERROR (Status) || (PciTopology == NULL)) {
+      DEBUG ((DEBUG_INFO, "%a: topology iterator exhausted at index %d\n", __func__, Index));
+      break;
     }
-    Index++;
-    if (!EFI_ERROR (Status)) {
+
+    Status = ProvisioningPcieDeviceResource (
+               Private,
+               &PciTopology->DeviceType.PcieDevice,
+               Index,
+               UriReturned
+               );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: Failed to provision PCIe device #%d\n", __func__, Index));
+    } else {
       UriReturned++;
     }
-  } while (PciTopology != NULL);
+  }
 
+  //
   // Set up the return exchange information.
-  ReturnUris = AllocateZeroPool (sizeof(REDFISH_FEATURE_ARRAY_TYPE_URI));
+  //
+  ReturnUris = AllocateZeroPool (sizeof (REDFISH_FEATURE_ARRAY_TYPE_URI));
   if (ReturnUris == NULL) {
     DEBUG ((DEBUG_ERROR, "%a, Not enough memory for REDFISH_FEATURE_ARRAY_TYPE_URI\n", __func__));
+    FreePool (PcieResourceUri);
     return EFI_OUT_OF_RESOURCES;
   }
-  ReturnUris->Count = ((UINTN)UriReturned - (UINTN)PcieResourceUri) / sizeof (*PcieResourceUri);
+
+  ReturnUris->Count = (UINTN)(UriReturned - PcieResourceUri);
   ReturnUris->List  = PcieResourceUri;
-  Private->InformationExchange->ReturnedInformation.Type                            =  InformationTypeArrayMemberUri;
+
+  Private->InformationExchange->ReturnedInformation.Type                            = InformationTypeArrayMemberUri;
   Private->InformationExchange->ReturnedInformation.ResourceTypeReturnedInformation = ReturnUris;
   return EFI_SUCCESS;
 }
 
+/**
+  Provisioning existing redfish PCIeDevice resource.
+
+  @param[in]   Private             Pointer to REDFISH_RESOURCE_COMMON_PRIVATE.
+
+  @retval EFI_UNSUPPORTED          This function is not supported.
+
+**/
 EFI_STATUS
 ProvisioningPcieDeviceExistResource (
   IN  REDFISH_RESOURCE_COMMON_PRIVATE  *Private
   )
 {
-
   return EFI_UNSUPPORTED;
 }
 
 /**
   Provisioning redfish resource by given URI.
 
-  @param[in]   This                Pointer to EFI_HP_REDFISH_HII_PROTOCOL instance.
+  @param[in]   This                Pointer to REDFISH_RESOURCE_COMMON_PRIVATE instance.
   @param[in]   ResourceExist       TRUE if resource exists, PUT method will be used.
                                    FALSE if resource does not exist POST method is used.
 
@@ -426,7 +523,6 @@ RedfishCheckResourceCommon (
   IN     CHAR8                            *HeaderEtag OPTIONAL
   )
 {
-
   return EFI_SUCCESS;
 }
 
@@ -446,7 +542,6 @@ RedfishUpdateResourceCommon (
   IN     CHAR8                            *InputJson
   )
 {
-
   return EFI_SUCCESS;
 }
 
@@ -466,6 +561,5 @@ RedfishIdentifyResourceCommon (
   IN     CHAR8                            *Json
   )
 {
-
   return EFI_SUCCESS;
 }

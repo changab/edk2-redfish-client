@@ -1,7 +1,7 @@
 /** @file
   Redfish feature driver implementation - PCIeDevice
 
-  Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.<BR>
+  Copyright (C) 2026 Advanced Micro Devices, Inc. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -15,9 +15,11 @@ extern EFI_HANDLE                       mRedfishResourceConfigProtocolHandle;
   Locate interchange data protocol.
 
   @param[in]   Handle           The ConfigHandle protocol.
-  @param[in]   InterchangeData  The pointer to receive EDKII_REDFISH_FEATURE_INTERCHANGE_DATA_PROTOCOL.
+  @param[out]  InterchangeData  The pointer to receive
+                                EDKII_REDFISH_FEATURE_INTERCHANGE_DATA_PROTOCOL.
 
-  @retval EFI_SUCCESS              EDKII_REDFISH_FEATURE_INTERCHANGE_DATA_PROTOCOL is returned successfully.
+  @retval EFI_SUCCESS              EDKII_REDFISH_FEATURE_INTERCHANGE_DATA_PROTOCOL
+                                   is returned successfully.
   @retval Others                   Some error happened.
 
 **/
@@ -40,9 +42,16 @@ RedfishLocateInterchangeData (
                   (VOID **)&Interface
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: EDKII_REDFISH_FEATURE_INTERCHANGE_DATA_PROTOCOL is not installed on %p: %r\n", __func__, Handle, Status));
+    DEBUG ((
+      DEBUG_ERROR,
+      "%a: EDKII_REDFISH_FEATURE_INTERCHANGE_DATA_PROTOCOL is not installed on %p: %r\n",
+      __func__,
+      Handle,
+      Status
+      ));
     return Status;
   }
+
   *InterchangeData = Interface;
   return EFI_SUCCESS;
 }
@@ -50,9 +59,9 @@ RedfishLocateInterchangeData (
 /**
   Provisioning redfish resource by given URI.
 
-  @param[in]   This                Pointer to EFI_HP_REDFISH_HII_PROTOCOL instance.
+  @param[in]   This                Pointer to EDKII_REDFISH_RESOURCE_CONFIG_PROTOCOL instance.
   @param[in]   Uri                 Target URI to create resource.
-  @param[in]   ToCreate            TRUE if the resource does not exist, we have to create the new
+  @param[in]   CreateResource      TRUE if the resource does not exist, we have to create the new
                                         resource.
                                    FALSE if the resource exist but property is missing, we have to
                                          update the resource.
@@ -69,8 +78,8 @@ RedfishResourceProvisioningResource (
   IN     BOOLEAN                                 CreateResource
   )
 {
-  REDFISH_RESOURCE_COMMON_PRIVATE  *Private;
-  EFI_STATUS                       Status;
+  REDFISH_RESOURCE_COMMON_PRIVATE                  *Private;
+  EFI_STATUS                                       Status;
   EDKII_REDFISH_FEATURE_INTERCHANGE_DATA_PROTOCOL  *InterchangeData;
 
   if ((This == NULL) || IS_EMPTY_STRING (Uri)) {
@@ -89,20 +98,22 @@ RedfishResourceProvisioningResource (
   if (EFI_ERROR (Status)) {
     return Status;
   }
+
   Private->InformationExchange = InterchangeData->ResourceInformationExchage;
-  Private->Uri = Uri;
+  Private->Uri                 = Uri;
 
   Status = RedfishProvisioningResourceCommon (Private, !CreateResource);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: failed to provision resource to: %s: %r\n", __func__, Uri, Status));
   }
+
   return Status;
 }
 
 /**
   Consume resource from given URI.
 
-  @param[in]   This                Pointer to EFI_HP_REDFISH_HII_PROTOCOL instance.
+  @param[in]   This                Pointer to EDKII_REDFISH_RESOURCE_CONFIG_PROTOCOL instance.
   @param[in]   Uri                 The target URI to consume.
 
   @retval EFI_SUCCESS              Value is returned successfully.
@@ -122,11 +133,8 @@ RedfishResourceConsumeResource (
 /**
   Get information about this protocol.
 
-  @param[in]   This                Pointer to EFI_HP_REDFISH_HII_PROTOCOL instance.
-  @param[out]  Schema              Supported schema.
-  @param[out]  Major               Supported major number.
-  @param[out]  Minor               Supported minor number.
-  @param[out]  Errata              Supported errata number.
+  @param[in]   This                Pointer to EDKII_REDFISH_RESOURCE_CONFIG_PROTOCOL instance.
+  @param[out]  Info                Supported schema information.
 
   @retval EFI_SUCCESS              Value is returned successfully.
   @retval Others                   Some error happened.
@@ -154,7 +162,7 @@ RedfishResourceGetInfo (
 /**
   Update resource to given URI.
 
-  @param[in]   This                Pointer to EFI_HP_REDFISH_HII_PROTOCOL instance.
+  @param[in]   This                Pointer to EDKII_REDFISH_RESOURCE_CONFIG_PROTOCOL instance.
   @param[in]   Uri                 The target URI to consume.
 
   @retval EFI_SUCCESS              Value is returned successfully.
@@ -174,7 +182,7 @@ RedfishResourceUpdate (
 /**
   Check resource on given URI.
 
-  @param[in]   This                Pointer to EFI_HP_REDFISH_HII_PROTOCOL instance.
+  @param[in]   This                Pointer to EDKII_REDFISH_RESOURCE_CONFIG_PROTOCOL instance.
   @param[in]   Uri                 The target URI to consume.
 
   @retval EFI_SUCCESS              Value is returned successfully.
@@ -402,7 +410,7 @@ EDKII_REDFISH_CONFIG_HANDLER_PROTOCOL  mRedfishConfigHandler = {
 **/
 VOID
 EFIAPI
-EfiRestJasonStructureProtocolIsReady (
+EfiRestJsonStructureProtocolIsReady (
   IN  EFI_EVENT  Event,
   IN  VOID       *Context
   )
@@ -432,7 +440,7 @@ EfiRestJasonStructureProtocolIsReady (
 /**
   Unloads an image.
 
-  @param  ImageHandle           Handle that identifies the image to be unloaded.
+  @param[in]  ImageHandle        Handle that identifies the image to be unloaded.
 
   @retval EFI_SUCCESS           The image has been unloaded.
   @retval EFI_INVALID_PARAMETER ImageHandle is not a valid image handle.
@@ -518,8 +526,20 @@ RedfishResourceEntryPoint (
   mRedfishResourceConfigProtocolHandle = ImageHandle;
 
   mRedfishResourcePrivate = AllocateZeroPool (sizeof (REDFISH_RESOURCE_COMMON_PRIVATE));
-  CopyMem (&mRedfishResourcePrivate->ConfigHandler, &mRedfishConfigHandler, sizeof (EDKII_REDFISH_CONFIG_HANDLER_PROTOCOL));
-  CopyMem (&mRedfishResourcePrivate->RedfishResourceConfig, &mRedfishResourceConfig, sizeof (EDKII_REDFISH_RESOURCE_CONFIG_PROTOCOL));
+  if (mRedfishResourcePrivate == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  CopyMem (
+    &mRedfishResourcePrivate->ConfigHandler,
+    &mRedfishConfigHandler,
+    sizeof (EDKII_REDFISH_CONFIG_HANDLER_PROTOCOL)
+    );
+  CopyMem (
+    &mRedfishResourcePrivate->RedfishResourceConfig,
+    &mRedfishResourceConfig,
+    sizeof (EDKII_REDFISH_RESOURCE_CONFIG_PROTOCOL)
+    );
 
   //
   // Publish config handler protocol and resource protocol.
@@ -536,7 +556,7 @@ RedfishResourceEntryPoint (
   EfiCreateProtocolNotifyEvent (
     &gEfiRestJsonStructureProtocolGuid,
     TPL_CALLBACK,
-    EfiRestJasonStructureProtocolIsReady,
+    EfiRestJsonStructureProtocolIsReady,
     NULL,
     &Registration
     );
